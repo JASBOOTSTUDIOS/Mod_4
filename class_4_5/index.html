@@ -1,0 +1,142 @@
+<html>
+<head>
+    <title>Index</title>
+</head>
+<style>
+.page-container {
+    display:flex;
+    flex-direction: column;
+}
+.main-container {
+  display: flex;
+  background-color: white;
+  border-radius: 10px;
+  flex-direction: row;
+}
+.item-container {
+    padding: 10px;
+    height:95%;
+    width:50%;
+    border: 2px solid lightsteelblue;
+    background-color: lightsteelblue;
+    margin:4px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap:4;
+    align-items: flex-start;
+    text-align: justify;
+}
+</style>
+<body>
+    <div class="page-container">
+        <div class="main-container">
+            <div class="item-container">
+                <div id="item-content">
+                    Please click on update button to get content.
+                </div>
+            </div>
+            <div class="item-container">
+                <label for="item-add-id">Id:</label>
+                <input type="text" id="item-add-id" name="item-add-id" onclick="console.info('1234');" />
+                <label for="item-add-id">Value:</label>
+                <textarea id="item-add-value" name="item-add-value"></textarea>
+            </div>
+            <div class="item-container">
+              <label for="item-search-id">Id:</label>
+              <input type="text" id="item-search-id" name="item-search-id" />
+              <textarea id="search-result-area"></textarea>
+            </div>
+
+            <div class="item-container">
+              <label for="item-delete-id">Id:</label>
+              <input type="text" id="item-delete-id" name="item-delete-id" />
+              <textarea id="delete-result-area"></textarea>
+            </div>
+        </div>
+        <div>
+            <button id="update" onclick="getValues();">Update Elements</button>
+            <button id="submit" onclick="insertValues();">Insert Element</button>
+            <button id="search" onclick="searchId();">Search</button>
+            <button id="search" onclick="deleteId();">Delete</button>
+        </div>
+    </div>
+</body>
+</html>
+
+<script type="text/javascript">
+// import MemoryItem from "./index.ts";
+function deleteId() {
+  try{
+    const id = document.getElementById("item-delete-id").value;
+  const area = document.getElementById("delete-result-area");
+  if(!id){console.info(!id); return;}
+
+  fetch(`http://localhost:8099/items/${id}`, {
+    method: "DELETE"
+  })  
+  .then(response => response.json())
+  .then(item => {
+    console.info(`este es el item con el json:${JSON.stringify(item)}`);
+    console.info(item);
+    if(item){
+        area.value = item.msg;
+    }else{
+        area.value = "ubo un error al intentar borrar el item";
+
+    }
+  });
+  }catch(error){
+    console.info(error);
+  }
+
+}
+
+function searchId() {
+  const id =  document.getElementById("item-search-id").value;
+  const area = document.getElementById("search-result-area");
+
+  fetch(`http://localhost:8099/items/${id}`, {
+    method: "GET"
+  })
+  .then(response => response.json())
+  .then(item => {
+    console.info(`${JSON.stringify(item)}`);
+    area.value = JSON.stringify(item);
+  });
+}
+
+async function  insertValues() {
+  const id =  document.getElementById("item-add-id").value;
+  const value =  document.getElementById("item-add-value").value;
+  const data = {id:id,value:value};
+  const response = await fetch(`http://localhost:8099/items`,
+    {
+      method:"POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    console.info(response);
+}
+
+function getValues() {
+  fetch("http://localhost:8099/items/all")
+    .then(response => response.json())
+    .then(items => {
+      const contentDiv = document.getElementById("item-content");
+      if(items.length > 0) {
+        const newItems = document.createElement('ul');
+        for(const item of items) {
+          const itemToAppend = document.createElement('li');
+          itemToAppend.innerHTML = `Id:${item.id} => Value:${JSON.stringify(item.value)}`;
+          newItems.appendChild(itemToAppend);
+        }
+
+        contentDiv.replaceChildren(newItems);
+      }
+      else {
+        contentDiv.replaceChildren("No elements to display.")
+      }
+    })
+}
+</script>
