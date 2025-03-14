@@ -1,5 +1,22 @@
 <html>
 <head>
+  <script
+        src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"
+        ></script>
+      <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+        integrity="sha384-BBtl+eGJRgqQAUMxJ7pMwbEyER4l1g+O15P+16Ep7Q9Q+zqX6gSbd85u4mG4QzX+"
+        crossorigin="anonymous"
+      ></script>
+      <!-- Bootstrap CSS v5.2.1 -->
+      <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+        crossorigin="anonymous"
+      />
     <title>Index</title>
 </head>
 <style>
@@ -32,33 +49,59 @@
     <div class="page-container">
         <div class="main-container">
             <div class="item-container">
+              <div>  
+                <h1>Items List</h1>              
                 <div id="item-content">
-                    Please click on update button to get content.
+                  <table class="">
+                    <thead>
+                      <tr>
+                        <td>
+                          <b>ID</b>
+                        </td>
+                        <td>
+                          <b>ITEMS</b>
+                        </td>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          1
+                        </td>
+                        <td>Jefry</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  Please click on update button to get content.
                 </div>
+              </div>
             </div>
             <div class="item-container">
+              <h1>Insert Item</h1>
                 <label for="item-add-id">Id:</label>
                 <input type="text" id="item-add-id" name="item-add-id" onclick="console.info('1234');" />
                 <label for="item-add-id">Value:</label>
                 <textarea id="item-add-value" name="item-add-value"></textarea>
             </div>
             <div class="item-container">
+              <h1>Search Item</h1>
               <label for="item-search-id">Id:</label>
               <input type="text" id="item-search-id" name="item-search-id" />
               <textarea id="search-result-area"></textarea>
             </div>
 
             <div class="item-container">
+              <h1>Delete Item</h1>
               <label for="item-delete-id">Id:</label>
               <input type="text" id="item-delete-id" name="item-delete-id" />
               <textarea id="delete-result-area"></textarea>
             </div>
         </div>
         <div>
-            <button id="update" onclick="getValues();">Update Elements</button>
-            <button id="submit" onclick="insertValues();">Insert Element</button>
-            <button id="search" onclick="searchId();">Search</button>
-            <button id="search" onclick="deleteId();">Delete</button>
+          <button class="btn btn-outline-primary" id="getValues" onclick="getValues();">Ver Elementos</button>
+            <button class="btn btn-outline-primary" id="submit" onclick="insertValues();">Insert Element</button>
+            <button class="btn btn-outline-primary" id="search" onclick="searchId();">Search</button>
+            <button class="btn btn-outline-primary" id="delete" onclick="deleteId();">Delete</button>
         </div>
     </div>
 </body>
@@ -89,7 +132,6 @@ function deleteId() {
   }catch(error){
     console.info(error);
   }
-
 }
 
 function searchId() {
@@ -102,7 +144,11 @@ function searchId() {
   .then(response => response.json())
   .then(item => {
     console.info(`${JSON.stringify(item)}`);
-    area.value = JSON.stringify(item);
+    if(!item.id && !item.value){
+      area.value = `${item.error}`;
+      return;
+    }
+    area.value = `ID: ${item.id}\nValue: ${item.value} `;
   });
 }
 
@@ -121,21 +167,22 @@ async function  insertValues() {
 
 function getValues() {
   fetch("http://localhost:8099/items/all")
-    .then(response => response.json())
-    .then(items => {
-      const contentDiv = document.getElementById("item-content");
-      if(items.length > 0) {
-        const newItems = document.createElement('ul');
+  .then(response => response.json())
+  .then(items => {
+    const contentDiv = document.getElementById("item-content");
+    if(items.length > 0) {
+        const head = `<table class="table table-info"><thead><tr><td>ID</td><td>ITEMS</td><td>ACTIONS</td></tr></thead>`;
+        const body = `</tbody></table>`;
+        let constent = "";
+        let li = "";
         for(const item of items) {
-          const itemToAppend = document.createElement('li');
-          itemToAppend.innerHTML = `Id:${item.id} => Value:${JSON.stringify(item.value)}`;
-          newItems.appendChild(itemToAppend);
+         li += `<tr><td><p>${item.id}</p></td><td><p>${item.value}</p></td><td><button class="btn btn-outline-success" id="update" onclick="updateId();">Update Elements</button></td></tr>`;
         }
-
-        contentDiv.replaceChildren(newItems);
+        constent = `${head}${li}${body}`;
+        contentDiv.innerHTML = constent;
       }
       else {
-        contentDiv.replaceChildren("No elements to display.")
+        contentDiv.replaceChildren("No elements to display.");
       }
     })
 }

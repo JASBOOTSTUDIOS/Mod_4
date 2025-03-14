@@ -8,58 +8,63 @@ incorrect values when queried. Also, deleting items is erratic,
 causing items to "go back in time" or return nonsensical values.
 
 */
-
 import express, { type Request, type Response } from "express";
 import cors from "cors";
-
-export interface MemoryItem {
-    id: string;
-    value: string;
-}
-
-let savedItems:MemoryItem[] = [
-    {id:"Mi valor 1",value:"El comtenido es valioso para el cliente."},
-    {id:"Mi Valor 2",value:"El comentario de este es el fina de los finales."},
-    {id:"123",value:"El comentario de este es el fina de los finales."}
-];
+import { savedItems, MemoryItem, isValidId } from "./controllers";
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+
 // Insertando Elementos;
 app.post("/items", (req: Request, res: Response) => {
-try{
-    const {id, value} = req.body;
-    const data = savedItems.filter(item => item.id.includes(id));
-    if(data){
-        res.status(205).json({msg:"Este Id ya existe."});
-    }
-    console.info("esto es lo que retorno Keys:");
-    console.info(data);
-    if(!id || !value){
-       res.status(400).json({msg:"Error, todos los campos deven de ser llenados."});
-       return;        
-    }
-   const newItem: MemoryItem = {
-       id,
-       value,
-   };
+    try {
+        console.info(req.body);
+        const { id, value } = req.body;
 
-   console.log("retorno de fetch");
-   console.log(newItem);
-   savedItems.push(newItem);
-   res.status(200).json(newItem);
-}catch(error){
-    res.status(400).json({msg:"Parace que hubo un error, contacte al servicio tecnico para mas informacion."});
-}
+        // Validaciones
+        console.info("2. Validaciones.");
+        
+        if (isValidId(id)) {
+            console.info("3. Validaciones.");
+            res.status(400).json({ msg: "ID inválido, debe cumplir el formato esperado." });
+            return;
+        }
+        console.info("4. Validaciones.");
+        
+        const exists = savedItems.some(item => item.id === id);
+        console.info("5. Validaciones.");
+        if (exists) {
+            console.info("6. Validaciones.");
+            res.status(400).json({ msg: "Este Id ya existe." });
+            return;
+        }
+        console.info("7. Validaciones.");
+        
+        const newItem: MemoryItem = { id, value };
+        savedItems.push(newItem);
+        res.status(201).json(newItem);
+        console.info("8. Validaciones.");
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ msg: "Hubo un error interno, contacte al soporte técnico." });
+    }
 });
+
+// Obtener todos los items
 app.get("/items/all", (req: Request, res: Response) => {
-    res.json(savedItems); 
+    try{
+        if(!savedItems) {res.status(400).json({msg:"No hay datos para mostrar."});return;}
+        res.json(savedItems);
+    }catch(error){
+        res.status(400).json({msg:"Hubo un error interno, contacte al soporte técnico para resolverlo."})
+    }
 });
 
+// Obtener un item por ID
 app.get("/items/:id", (req: Request, res: Response) => {
-    const item = savedItems.find((item) => item.id === req.params.id); 
-
+    const item = savedItems.find(item => item.id === req.params.id);
     if (!item) {
         res.status(404).json({ error: "Item not found" });
         return;
@@ -68,22 +73,25 @@ app.get("/items/:id", (req: Request, res: Response) => {
     res.json(item);
 });
 
-
+// Eliminar un item
 app.delete("/items/:id", (req: Request, res: Response) => {
-    const savedItem = savedItems.findIndex((item) => item.id === req.params.id); 
-    if(!savedItem){}
+    const index = savedItems.findIndex(item => item.id === req.params.id);
 
-    if (savedItem === -1) {
-        res.status(404).json({ msg: "Item not found" }); 
+    if (index === -1) {
+        res.status(404).json({ msg: "Item not found" });
         return;
     }
 
-    const deletedItem = savedItems.splice(savedItem, 1);
+    const deletedItem = savedItems.splice(index, 1);
     console.info(deletedItem[0]);
-    res.json({msg:"item delete successfuly!"});
-    return;
+    res.json({ msg: "Item deleted successfully!" });
 });
 
 app.listen(8099, () => {
-    console.log("Running on port 8099");
+    console.log("Running on port http://localhost:8099/items/all");
+});
+
+// Manejo de errores no controlados
+process.on("uncaughtException", (err) => {
+    console.error("Error no manejado:", err);
 });
